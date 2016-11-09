@@ -15,6 +15,10 @@ module.exports = NodeHelper.create({
 
   getCommute: function(route) {
       var self = this;
+
+      console.log('MMM-Traffic: request ' + route.id + ' ' + route.route_name);
+      console.log('MMM-Traffic: url ' + route.url);
+
       request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
       if (!error && response.statusCode == 200) {
         var trafficComparison = 0;
@@ -33,6 +37,7 @@ module.exports = NodeHelper.create({
           route.commute = JSON.parse(body).routes[0].legs[0].duration.text;
         }
         route.summary = JSON.parse(body).routes[0].summary;
+	console.log('MMM-Traffic: reply ' + route.id + ' ' + route.commute);
         self.sendSocketNotification('TRAFFIC_COMMUTE', route);
       }
 	}
@@ -109,6 +114,7 @@ module.exports = NodeHelper.create({
 
   //Subclass socketNotificationReceived received.
   socketNotificationReceived: function(notification, route) {
+      console.log('MMM-Traffic: socketNotficicationRecieved ' + route.id + ' ' + route.route_name);
       if (notification === 'TRAFFIC_URL') {
 	  this.getCommute(route);
       } else if (notification === 'LEAVE_BY') {

@@ -77,6 +77,7 @@ Module.register('MMM-Traffic', {
     },
 
     updateCommute: function(self) {
+	Log.info('MMM-Traffic: updateCommute');
 	for (var i=0; i < this.config.routes.length; i++) {
 	    var route = this.config.routes[i];
             if (route.arrival_time.length == 4) {
@@ -93,6 +94,8 @@ Module.register('MMM-Traffic', {
     },
 
     getDom: function() {
+	Log.info('MMM-Traffic: getDom');
+
         var meta_wrapper = document.createElement("div");
 
 	for (var i=0; i < this.config.routes.length; i++) {
@@ -106,7 +109,7 @@ Module.register('MMM-Traffic', {
 	    else {
 		//symbol
 		var symbol = document.createElement('span');
-		symbol.className = this.symbols[route.mode] + ' symbol';
+		symbol.className = this.config.symbols[route.mode] + ' symbol';
 		commuteInfo.appendChild(symbol);
 
 		if (route.arrival_time == '') {
@@ -141,7 +144,7 @@ Module.register('MMM-Traffic', {
 		} else {
 		    //leave-by time
 		    var trafficInfo = document.createElement('span');
-		    trafficInfo.innerHTML = "Leave by " + this.leaveBy;
+		    trafficInfo.innerHTML = "Leave by " + route.leaveBy;
 		    commuteInfo.appendChild(trafficInfo);
   		    wrapper.appendChild(commuteInfo);
 		    
@@ -149,8 +152,8 @@ Module.register('MMM-Traffic', {
 		    if (route.route_name) {
 			var routeName = document.createElement('div');
 			routeName.className = 'dimmed small';
-			if (this.summary.length > 0 && route.show_summary){
-			    routeName.innerHTML = route.route_name + ' via ' + this.summary + " to arrive by " + route.arrival_time.substring(0,2) + ":" + route.arrival_time.substring(2,4);
+			if (route.summary.length > 0 && route.show_summary){
+			    routeName.innerHTML = route.route_name + ' via ' + route.summary + " to arrive by " + route.arrival_time.substring(0,2) + ":" + route.arrival_time.substring(2,4);
 			} else {
 			    console.log(typeof route.arrival_time );
 			    routeName.innerHTML = route.route_name + " to arrive by " + route.arrival_time.substring(0,2) + ":" + route.arrival_time.substring(2,4);
@@ -173,12 +176,14 @@ Module.register('MMM-Traffic', {
         params += '&key=' + config.api_key;
         params += '&traffic_model=' + route.traffic_model;
         params += '&language=' + config.language;
+	Log.info('MMM-Traffic: getParams: ' + params);
         return params;
     },
 
     socketNotificationReceived: function(notification, route) {
-	Log.info('received ' + notification + ' for ' + route.name);
+	Log.info('MMM-Traffic: received ' + notification + ' for ' + route.route_name);
         route.loaded = true;
+	this.config.routes[route.id] = route;
         this.updateDom(1000);
     }
 
