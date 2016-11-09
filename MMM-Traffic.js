@@ -177,19 +177,8 @@ Module.register('MMM-Traffic', {
     },
 
     socketNotificationReceived: function(notification, route) {
-        route.leaveBy = '';
-        if (notification === 'TRAFFIC_COMMUTE') {
-            Log.info('received TRAFFIC_COMMUTE for' + route.name );
-            route.commute = payload.commute;
-            route.summary = payload.summary;
-            route.trafficComparison = payload.trafficComparison;
-            route.loaded = true;
-        } else if (notification === 'TRAFFIC_TIMING') {
-            Log.info('received TRAFFIC_TIMING for ' + route.name);
-            route.leaveBy = payload.commute;
-            route.summary = payload.summary;
-            route.loaded = true;
-        }
+	Log.info('received ' + notification + ' for ' + route.name);
+        route.loaded = true;
         this.updateDom(1000);
     }
 
