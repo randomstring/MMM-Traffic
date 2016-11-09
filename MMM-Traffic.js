@@ -52,18 +52,20 @@ Module.register('MMM-Traffic', {
             route.leaveBy = '';
 
 	    /* set defaults from config: mode, traffic_model, arrival_time */
-	    if (! route.hasOwnProperty(route.mode) ) {
+	    if (! route.hasOwnProperty('mode') ) {
 		route.mode = this.config.mode;
 	    }
-	    if (! route.hasOwnProperty(route.traffic_model) ) {
+	    if (! route.hasOwnProperty('traffic_model') ) {
 		route.traffic_model = this.config.traffic_model;
 	    }
-	    if (! route.hasOwnProperty(route.arrival_time) ) {
+	    if (! route.hasOwnProperty('arrival_time') ) {
 		route.arrival_time = this.config.arrival_time;
 	    }
-	    if (! route.hasOwnProperty(route.show_summary) ) {
+	    if (! route.hasOwnProperty('show_summary') ) {
 		route.show_summary = this.config.show_summary;
 	    }
+
+	    Log.info('after: ' + route.mode + ' ' + route.traffic_model + ' ' + route.arrival_time);
 
 	    route.url = encodeURI('https://maps.googleapis.com/maps/api/directions/json' + 
 				   this.getParams(this.config, route));
