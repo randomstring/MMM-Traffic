@@ -49,9 +49,9 @@ module.exports = NodeHelper.create({
     var newTiming = 0;
     request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
       if (!error && response.statusCode == 200) {
-        var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
-        newTiming = self.timeSub(route.arrival_time, durationValue, 0);
-	      self.getTimingFinal(route, newTiming, route.arrival_time);
+          var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
+          newTiming = self.timeSub(route.arrival_time, durationValue, 0);
+	  self.getTimingFinal(route, newTiming, route.arrival_time);
       }
     });
   },
@@ -66,7 +66,7 @@ module.exports = NodeHelper.create({
           route.trafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
         }
         route.summary = JSON.parse(body).routes[0].summary;
-        route.finalTime = self.timeSub(arrivalTime, route.trafficValue, 1);
+        route.leaveBy = self.timeSub(arrivalTime, route.trafficValue, 1);
         self.sendSocketNotification('TRAFFIC_TIMING', route);
       }
     });
