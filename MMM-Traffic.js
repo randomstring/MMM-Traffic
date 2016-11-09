@@ -165,7 +165,7 @@ Module.register('MMM-Traffic', {
 	    meta_wrapper.appendChild(wrapper);
 	    
         }
-        return wrapper;
+        return meta_wrapper;
     },
 
     getParams: function(config,route) {
