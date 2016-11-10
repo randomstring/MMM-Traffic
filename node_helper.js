@@ -15,45 +15,47 @@ module.exports = NodeHelper.create({
 
   getCommute: function(route) {
       var self = this;
-
-      console.log('MMM-Traffic: request ' + route.id + ' ' + route.route_name);
-      console.log('MMM-Traffic: url ' + route.url);
-
-      request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var trafficComparison = 0;
-	if((JSON.parse(body).status)=='OVER_QUERY_LIMIT')
-	{
-	    console.log("API-Call Quote reached for today -> no more calls until 0:00 PST");
-	}
-	else
-	{
-        if (JSON.parse(body).routes[0].legs[0].duration_in_traffic) {
-          route.commute = JSON.parse(body).routes[0].legs[0].duration_in_traffic.text;
-          route.noTrafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
-          route.withTrafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
-          route.trafficComparison = parseInt(route.withTrafficValue)/parseInt(route.noTrafficValue);
-        } else {
-          route.commute = JSON.parse(body).routes[0].legs[0].duration.text;
-        }
-        route.summary = JSON.parse(body).routes[0].summary;
-	console.log('MMM-Traffic: reply ' + route.id + ' ' + route.commute);
-        self.sendSocketNotification('TRAFFIC_COMMUTE', route);
+      
+      if (this.verbose) {
+	  console.log('MMM-Traffic: request ' + route.id + ' ' + route.route_name);
+	  console.log('MMM-Traffic: url ' + route.url);
       }
+      
+      request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var trafficComparison = 0;
+	    if((JSON.parse(body).status)=='OVER_QUERY_LIMIT') {
+		console.log("API-Call Quote reached for today -> no more calls until 0:00 PST");
+	    }
+	    else {
+		if (JSON.parse(body).routes[0].legs[0].duration_in_traffic) {
+		    route.commute = JSON.parse(body).routes[0].legs[0].duration_in_traffic.text;
+		    route.noTrafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
+		    route.withTrafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
+		    route.trafficComparison = parseInt(route.withTrafficValue)/parseInt(route.noTrafficValue);
+		} else {
+		    route.commute = JSON.parse(body).routes[0].legs[0].duration.text;
+		}
+		route.summary = JSON.parse(body).routes[0].summary;
+		if (this.verbose) {
+		    console.log('MMM-Traffic: reply ' + route.id + ' ' + route.commute);
+		}
+		self.sendSocketNotification('TRAFFIC_COMMUTE', route);
+	    }
 	}
     });
   },
 
   getTiming: function(route) {
-    var self = this;
-    var newTiming = 0;
-    request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
-          var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
-          newTiming = self.timeSub(route.arrival_time, durationValue, 0);
-	  self.getTimingFinal(route, newTiming, route.arrival_time);
-      }
-    });
+      var self = this;
+      var newTiming = 0;
+      request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
+		  if (!error && response.statusCode == 200) {
+		      var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
+		      newTiming = self.timeSub(route.arrival_time, durationValue, 0);
+		      self.getTimingFinal(route, newTiming, route.arrival_time);
+		  }
+	      });
   },
 
   getTimingFinal: function(route, newTiming, arrivalTime) {
@@ -114,7 +116,6 @@ module.exports = NodeHelper.create({
 
   //Subclass socketNotificationReceived received.
   socketNotificationReceived: function(notification, route) {
-      console.log('MMM-Traffic: socketNotficicationRecieved ' + route.id + ' ' + route.route_name);
       if (notification === 'TRAFFIC_URL') {
 	  this.getCommute(route);
       } else if (notification === 'LEAVE_BY') {

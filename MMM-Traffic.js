@@ -31,7 +31,8 @@ Module.register('MMM-Traffic', {
 	    'transit': 'fa fa-train'
         },
         language: config.language,
-        show_summary: true
+        show_summary: true,
+	verbose: false
     },
 
     start: function() {
@@ -43,7 +44,9 @@ Module.register('MMM-Traffic', {
 	    this.config.routes = [ this.config.routes ]; 
 	}
 
-        Log.info('MMM-Traffic: total routes = ' + this.config.routes.length);
+	if (this.verbose) {
+            Log.info('MMM-Traffic: total routes = ' + this.config.routes.length);
+	}
 
 	for (var i=0; i < this.config.routes.length; i++) {
 	    var route = this.config.routes[i];
@@ -65,12 +68,12 @@ Module.register('MMM-Traffic', {
 		route.show_summary = this.config.show_summary;
 	    }
 
-	    Log.info('after: ' + route.mode + ' ' + route.traffic_model + ' ' + route.arrival_time);
-
 	    route.url = encodeURI('https://maps.googleapis.com/maps/api/directions/json' + 
 				   this.getParams(this.config, route));
 
-            Log.info('MMM-Traffic: new route:' + route.route_name);
+	    if (this.verbose) {
+		Log.info('MMM-Traffic: adding new route:' + route.route_name);
+	    }
 
             route.commute = '';
             route.summary = '';
@@ -79,7 +82,6 @@ Module.register('MMM-Traffic', {
     },
 
     updateCommute: function(self) {
-	Log.info('MMM-Traffic: updateCommute');
 	for (var i=0; i < this.config.routes.length; i++) {
 	    var route = this.config.routes[i];
             if (route.arrival_time.length == 4) {
@@ -96,8 +98,6 @@ Module.register('MMM-Traffic', {
     },
 
     getDom: function() {
-	Log.info('MMM-Traffic: getDom');
-
         var meta_wrapper = document.createElement("div");
 
 	for (var i=0; i < this.config.routes.length; i++) {
@@ -178,12 +178,13 @@ Module.register('MMM-Traffic', {
         params += '&key=' + config.api_key;
         params += '&traffic_model=' + route.traffic_model;
         params += '&language=' + config.language;
-	Log.info('MMM-Traffic: getParams: ' + params);
         return params;
     },
 
     socketNotificationReceived: function(notification, route) {
-	Log.info('MMM-Traffic: received ' + notification + ' for ' + route.route_name);
+	if (this.verbose) {
+	    Log.info('MMM-Traffic: received ' + notification + ' for ' + route.route_name);
+	}
         route.loaded = true;
 	this.config.routes[route.id] = route;
         this.updateDom(1000);
