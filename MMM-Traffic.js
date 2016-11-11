@@ -12,7 +12,7 @@ Module.register('MMM-Traffic', {
     defaults: {
         api_key: '',
         mode: 'driving',
-        interval: 300000, //all modules use milliseconds
+        interval: 900000, // 15minutes. all modules use milliseconds
         origin: '',
         destination: '',
         traffic_model: 'best_guess',
