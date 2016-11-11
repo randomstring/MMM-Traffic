@@ -1,7 +1,8 @@
 /* Magic Mirror
- * Module: MMM-Traffic
+ * Module: MMM-Traffic-Multi
  *
  * By Sam Lewis https://github.com/SamLewis0602
+ * Multiple Route Support By Bryn Dole https://github.com/randomstring/
  * MIT Licensed.
  */
 
@@ -10,15 +11,15 @@ var request = require('request');
 
 module.exports = NodeHelper.create({
   start: function () {
-    console.log('MMM-Traffic helper started ...');
+    console.log('MMM-Traffic-Multi helper started ...');
   },
 
   getCommute: function(route) {
       var self = this;
       
       if (this.verbose) {
-	  console.log('MMM-Traffic: request ' + route.id + ' ' + route.route_name);
-	  console.log('MMM-Traffic: url ' + route.url);
+	  console.log('MMM-Traffic-Multi: request ' + route.id + ' ' + route.route_name);
+	  console.log('MMM-Traffic-Multi: url ' + route.url);
       }
       
       request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
@@ -38,7 +39,7 @@ module.exports = NodeHelper.create({
 		}
 		route.summary = JSON.parse(body).routes[0].summary;
 		if (this.verbose) {
-		    console.log('MMM-Traffic: reply ' + route.id + ' ' + route.commute);
+		    console.log('MMM-Traffic-Multi: reply ' + route.id + ' ' + route.commute);
 		}
 		self.sendSocketNotification('TRAFFIC_COMMUTE', route);
 	    }
