@@ -1,8 +1,8 @@
-# MMM-Traffic
+# MMM-Traffic-Multi
 This a module for the [MagicMirror](https://github.com/MichMich/MagicMirror/tree/develop). It can display commute time between two given addresses by car, walking, bicycling, or transit. The module uses the Google Maps Directions API to get commute time, which factors in traffic information.
 
 ## Installation
-1. Navigate into your MagicMirror's `modules` folder and execute `git clone https://github.com/SamLewis0602/MMM-Traffic.git`. A new folder will appear, navigate into it.
+1. Navigate into your MagicMirror's `modules` folder and execute `git clone https://github.com/randomstring/MMM-Traffic.git`. A new folder will appear, navigate into it.
 2. Execute `npm install` to install the node dependencies.
 
 ## Config
@@ -35,7 +35,7 @@ The entry in `config.js` can include the following options:
 Here is an example of an entry in `config.js`
 ```
 {
-	module: 'MMM-Traffic',
+	module: 'MMM-Traffic-Multi',
 	position: 'top_left',
 	classes: 'dimmed medium', //optional, default is 'bright medium', only applies to commute info not route_name
 	config: {
