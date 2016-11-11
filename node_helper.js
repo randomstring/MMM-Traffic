@@ -13,56 +13,63 @@ module.exports = NodeHelper.create({
     console.log('MMM-Traffic helper started ...');
   },
 
-  getCommute: function(api_url) {
-    var self = this;
-    request({url: api_url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var trafficComparison = 0;
-	if((JSON.parse(body).status)=='OVER_QUERY_LIMIT')
-	{
+  getCommute: function(route) {
+      var self = this;
+      
+      if (this.verbose) {
+	  console.log('MMM-Traffic: request ' + route.id + ' ' + route.route_name);
+	  console.log('MMM-Traffic: url ' + route.url);
+      }
+      
+      request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var trafficComparison = 0;
+	    if((JSON.parse(body).status)=='OVER_QUERY_LIMIT') {
 		console.log("API-Call Quote reached for today -> no more calls until 0:00 PST");
-	}
-	else
-	{
-        if (JSON.parse(body).routes[0].legs[0].duration_in_traffic) {
-          var commute = JSON.parse(body).routes[0].legs[0].duration_in_traffic.text;
-          var noTrafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
-          var withTrafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
-          trafficComparison = parseInt(withTrafficValue)/parseInt(noTrafficValue);
-        } else {
-          var commute = JSON.parse(body).routes[0].legs[0].duration.text;
-        }
-        var summary = JSON.parse(body).routes[0].summary;
-        self.sendSocketNotification('TRAFFIC_COMMUTE', {'commute':commute, 'url':api_url, 'trafficComparison': trafficComparison, 'summary':summary});
-      }
+	    }
+	    else {
+		if (JSON.parse(body).routes[0].legs[0].duration_in_traffic) {
+		    route.commute = JSON.parse(body).routes[0].legs[0].duration_in_traffic.text;
+		    route.noTrafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
+		    route.withTrafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
+		    route.trafficComparison = parseInt(route.withTrafficValue)/parseInt(route.noTrafficValue);
+		} else {
+		    route.commute = JSON.parse(body).routes[0].legs[0].duration.text;
+		}
+		route.summary = JSON.parse(body).routes[0].summary;
+		if (this.verbose) {
+		    console.log('MMM-Traffic: reply ' + route.id + ' ' + route.commute);
+		}
+		self.sendSocketNotification('TRAFFIC_COMMUTE', route);
+	    }
 	}
     });
   },
 
-  getTiming: function(api_url, arrivalTime) {
-    var self = this;
-    var newTiming = 0;
-    request({url: api_url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
-        newTiming = self.timeSub(arrivalTime, durationValue, 0);
-	      self.getTimingFinal(api_url, newTiming, arrivalTime);
-      }
-    });
+  getTiming: function(route) {
+      var self = this;
+      var newTiming = 0;
+      request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
+		  if (!error && response.statusCode == 200) {
+		      var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
+		      newTiming = self.timeSub(route.arrival_time, durationValue, 0);
+		      self.getTimingFinal(route, newTiming, route.arrival_time);
+		  }
+	      });
   },
 
-  getTimingFinal: function(api_url, newTiming, arrivalTime) {
+  getTimingFinal: function(route, newTiming, arrivalTime) {
     var self = this;
-    request({url: api_url + "&departure_time=" + newTiming, method: 'GET'}, function(error, response, body) {
+    request({url: route.url + "&departure_time=" + newTiming, method: 'GET'}, function(error, response, body) {
       if (!error && response.statusCode == 200) {
-        if (JSON.parse(body).routes[0].legs[0].duration_in_traffic.value) {
-          var trafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
+        if (JSON.parse(body).routes[0].legs[0].hasOwnProperty('duration_in_traffic')) {
+          route.trafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
         } else {
-          var trafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
+          route.trafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
         }
-        var summary = JSON.parse(body).routes[0].summary;
-        var finalTime = self.timeSub(arrivalTime, trafficValue, 1);
-        self.sendSocketNotification('TRAFFIC_TIMING', {'commute':finalTime,'summary':summary, 'url':api_url});
+        route.summary = JSON.parse(body).routes[0].summary;
+        route.leaveBy = self.timeSub(arrivalTime, route.trafficValue, 1);
+        self.sendSocketNotification('TRAFFIC_TIMING', route);
       }
     });
 
@@ -108,12 +115,12 @@ module.exports = NodeHelper.create({
   },
 
   //Subclass socketNotificationReceived received.
-  socketNotificationReceived: function(notification, payload) {
-    if (notification === 'TRAFFIC_URL') {
-      this.getCommute(payload);
-    } else if (notification === 'LEAVE_BY') {
-      this.getTiming(payload.url, payload.arrival);
-    }
+  socketNotificationReceived: function(notification, route) {
+      if (notification === 'TRAFFIC_URL') {
+	  this.getCommute(route);
+      } else if (notification === 'LEAVE_BY') {
+	  this.getTiming(route);
+      }
   }
 
 });
