@@ -31,13 +31,20 @@ module.exports = NodeHelper.create({
 	    else {
 		if (JSON.parse(body).routes[0].legs[0].duration_in_traffic) {
 		    route.commute = JSON.parse(body).routes[0].legs[0].duration_in_traffic.text;
+		    route.trafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
 		    route.noTrafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
 		    route.withTrafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
 		    route.trafficComparison = parseInt(route.withTrafficValue)/parseInt(route.noTrafficValue);
 		} else {
 		    route.commute = JSON.parse(body).routes[0].legs[0].duration.text;
+		    route.trafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
 		}
 		route.summary = JSON.parse(body).routes[0].summary;
+		if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
+		    /* Google assumes bikes average 12 mph. Convert to new average speed */
+		    route.trafficValue = Math.floor(route.trafficValue * 12.0 / route.bicycling_speed);
+		    route.commute = self.humanReadableTime(route.trafficValue);
+		}
 		if (route.verbose) {
 		    console.log('MMM-Traffic-Multi: reply ' + route.id + ' ' + route.mode + ' ' + route.commute);
 		}
@@ -47,12 +54,35 @@ module.exports = NodeHelper.create({
     });
   },
 
+  humanReadableTime: function(seconds) {
+      var hours = Math.floor(seconds / 3600.0);
+      var remainder = seconds - (hours * 3600);
+      var minutes = Math.ceil(remainder / 60);
+      var humanReadable = '';
+      if (hours > 0) {
+	  humanReadable = hours + ' hr';
+      }
+      if (minutes > 0) {
+	  if (hours > 0) {
+	      humanReadable = humanReadable + ' ';
+	  }
+	  humanReadable = humanReadable + minutes + ' min';
+      }
+      return humanReadable;
+  },
+
   getTiming: function(route) {
       var self = this;
       var newTiming = 0;
       request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
 		  if (!error && response.statusCode == 200) {
 		      var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
+
+		      if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
+			  /* Google assumes bikes average 12 mph. Convert to new average speed */
+			  durationValue = Math.floor(durationValue * 12.0 / route.bicycling_speed);
+		      }
+
 		      newTiming = self.timeSub(route.arrival_time, durationValue, 0);
 		      self.getTimingFinal(route, newTiming, route.arrival_time);
 		  }
@@ -68,6 +98,12 @@ module.exports = NodeHelper.create({
         } else {
           route.trafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
         }
+
+	if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
+	    /* Google assumes bikes average 12 mph. Convert to new average speed */
+	    route.trafficValue = Math.floor(route.trafficValue * 12.0 / route.bicycling_speed);
+	}
+
         route.summary = JSON.parse(body).routes[0].summary;
         route.leaveBy = self.timeSub(arrivalTime, route.trafficValue, 1);
         self.sendSocketNotification('TRAFFIC_TIMING', route);
@@ -93,11 +129,11 @@ module.exports = NodeHelper.create({
     var testDate = new Date(nowY + "-" + nowM + "-" + nowD + " " + nowH + ":" + nowMin + ":00");
     if (lookPretty == 0) {
       if (currentDate >= testDate) {
-        var goodDate = new Date (testDate.getTime() + 86400000 - (durationValue*1000)); // Next day minus uncalibrated duration
-        return Math.floor(goodDate / 1000);
+          var goodDate = new Date (testDate.getTime() + 86400000 - (durationValue*1000)); // Next day minus uncalibrated duration
+          return Math.floor(goodDate / 1000);
       } else {
-	      var goodDate = new Date (testDate.getTime() - (durationValue*1000)); // Minus uncalibrated duration
-        return Math.floor(testDate / 1000);
+	  var goodDate = new Date (testDate.getTime() - (durationValue*1000)); // Minus uncalibrated duration
+          return Math.floor(testDate / 1000);
       }
     } else {
       var finalDate = new Date (testDate.getTime() - (durationValue * 1000));

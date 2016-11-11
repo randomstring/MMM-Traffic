@@ -31,6 +31,8 @@ The entry in `config.js` can include the following options:
 |`route_name`|A nickname for the route that will appear below the route when set.<br><br>**Example:** `'Home to school'`<br>**Default value:** None|
 |`show_summary`|Show the route's summary after the nickname.<br><br>**Default value:** `true` but won't show unless `route_name` is set<br>**Effect** (in bold): 'Home to school **via Route 1/Main St**'|
 |`traffic_model`|Model for traffic estimation.<br><br>**Default value:** `'best_guess'`<br>**Other Options:**`'optimistic' 'pessimistic'`|
+|`bicycling_speed`|Google's API assumes everyone bicycles at 12mph. This sets a different average speed for calculating travel time by bike. Speed is specified in miles per hour (mph).<br><br>**Default value:** `'12'``|
+
 
 Here is an example of an entry in `config.js`
 ```
