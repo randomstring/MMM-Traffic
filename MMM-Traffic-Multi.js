@@ -45,7 +45,7 @@ Module.register('MMM-Traffic-Multi', {
 	    this.config.routes = [ this.config.routes ]; 
 	}
 
-	if (this.verbose) {
+	if (this.config.verbose) {
             Log.info('MMM-Traffic: total routes =' + this.config.routes.length);
 	}
 
@@ -68,11 +68,14 @@ Module.register('MMM-Traffic-Multi', {
 	    if (! route.hasOwnProperty('show_summary') ) {
 		route.show_summary = this.config.show_summary;
 	    }
+	    if (! route.hasOwnProperty('verbose') ) {
+		route.verbose = this.config.verbose;
+	    }
 
 	    route.url = encodeURI('https://maps.googleapis.com/maps/api/directions/json' + 
 				   this.getParams(this.config, route));
 
-	    if (this.verbose) {
+	    if (this.config.verbose) {
 		Log.info('MMM-Traffic-Multi: adding new route:' + route.route_name);
 	    }
 
@@ -183,7 +186,7 @@ Module.register('MMM-Traffic-Multi', {
     },
 
     socketNotificationReceived: function(notification, route) {
-	if (this.verbose) {
+	if (this.config.verbose) {
 	    Log.info('MMM-Traffic-Multi: received ' + notification + ' for ' + route.route_name);
 	}
         route.loaded = true;
