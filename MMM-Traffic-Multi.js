@@ -33,7 +33,8 @@ Module.register('MMM-Traffic-Multi', {
         },
         language: config.language,
         show_summary: true,
-	verbose: false
+	verbose: false,
+	bicyclingSpeed: 16,   // average cycling speed in mph, Google default is 12mph
     },
 
     start: function() {
