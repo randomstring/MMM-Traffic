@@ -1,7 +1,7 @@
 /* global Module */
 
 /* Magic Mirror
- * Module: MMM-Traffic
+ * Module: MMM-Traffic-Multi
  *
  * Original By Sam Lewis https://github.com/SamLewis0602
  * Multiple Route Support By Bryn Dole https://github.com/randomstring/
@@ -33,6 +33,7 @@ Module.register('MMM-Traffic-Multi', {
         },
         language: config.language,
         show_summary: true,
+	bicyclingSpeed: 16,   // average cycling speed in mph, Google default is 12mph
 	verbose: false
     },
 

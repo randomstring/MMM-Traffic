@@ -17,7 +17,7 @@ module.exports = NodeHelper.create({
   getCommute: function(route) {
       var self = this;
       
-      if (this.verbose) {
+      if (route.verbose) {
 	  console.log('MMM-Traffic-Multi: request ' + route.id + ' ' + route.route_name);
 	  console.log('MMM-Traffic-Multi: url ' + route.url);
       }
@@ -38,8 +38,8 @@ module.exports = NodeHelper.create({
 		    route.commute = JSON.parse(body).routes[0].legs[0].duration.text;
 		}
 		route.summary = JSON.parse(body).routes[0].summary;
-		if (this.verbose) {
-		    console.log('MMM-Traffic-Multi: reply ' + route.id + ' ' + route.commute);
+		if (route.verbose) {
+		    console.log('MMM-Traffic-Multi: reply ' + route.id + ' ' + route.mode + ' ' + route.commute);
 		}
 		self.sendSocketNotification('TRAFFIC_COMMUTE', route);
 	    }
