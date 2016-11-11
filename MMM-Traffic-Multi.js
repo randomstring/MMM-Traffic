@@ -1,13 +1,14 @@
 /* global Module */
 
 /* Magic Mirror
- * Module: MMM-Traffic
+ * Module: MMM-Traffic-Multi
  *
- * By Sam Lewis https://github.com/SamLewis0602
+ * Original By Sam Lewis https://github.com/SamLewis0602
+ * Multiple Route Support By Bryn Dole https://github.com/randomstring/
  * MIT Licensed.
  */
 
-Module.register('MMM-Traffic', {
+Module.register('MMM-Traffic-Multi', {
 
     defaults: {
         api_key: '',
@@ -32,20 +33,21 @@ Module.register('MMM-Traffic', {
         },
         language: config.language,
         show_summary: true,
-	verbose: false
+	verbose: false,
+	bicyclingSpeed: 16,   // average cycling speed in mph, Google default is 12mph
     },
 
     start: function() {
         Log.info('Starting module: ' + this.name);
-        if (this.data.classes === 'MMM-Traffic') {
+        if (this.data.classes === 'MMM-Traffic-Multi') {
             this.data.classes = 'bright medium';
         }
 	if (! this.config.routes instanceof Array) {
 	    this.config.routes = [ this.config.routes ]; 
 	}
 
-	if (this.verbose) {
-            Log.info('MMM-Traffic: total routes = ' + this.config.routes.length);
+	if (this.config.verbose) {
+            Log.info('MMM-Traffic: total routes =' + this.config.routes.length);
 	}
 
 	for (var i=0; i < this.config.routes.length; i++) {
@@ -67,12 +69,15 @@ Module.register('MMM-Traffic', {
 	    if (! route.hasOwnProperty('show_summary') ) {
 		route.show_summary = this.config.show_summary;
 	    }
+	    if (! route.hasOwnProperty('verbose') ) {
+		route.verbose = this.config.verbose;
+	    }
 
 	    route.url = encodeURI('https://maps.googleapis.com/maps/api/directions/json' + 
 				   this.getParams(this.config, route));
 
-	    if (this.verbose) {
-		Log.info('MMM-Traffic: adding new route:' + route.route_name);
+	    if (this.config.verbose) {
+		Log.info('MMM-Traffic-Multi: adding new route:' + route.route_name);
 	    }
 
             route.commute = '';
@@ -182,8 +187,8 @@ Module.register('MMM-Traffic', {
     },
 
     socketNotificationReceived: function(notification, route) {
-	if (this.verbose) {
-	    Log.info('MMM-Traffic: received ' + notification + ' for ' + route.route_name);
+	if (this.config.verbose) {
+	    Log.info('MMM-Traffic-Multi: received ' + notification + ' for ' + route.route_name);
 	}
         route.loaded = true;
 	this.config.routes[route.id] = route;

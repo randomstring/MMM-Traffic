@@ -1,8 +1,8 @@
-# MMM-Traffic
+# MMM-Traffic-Multi
 This a module for the [MagicMirror](https://github.com/MichMich/MagicMirror/tree/develop). It can display commute time between two given addresses by car, walking, bicycling, or transit. The module uses the Google Maps Directions API to get commute time, which factors in traffic information.
 
 ## Installation
-1. Navigate into your MagicMirror's `modules` folder and execute `git clone https://github.com/SamLewis0602/MMM-Traffic.git`. A new folder will appear, navigate into it.
+1. Navigate into your MagicMirror's `modules` folder and execute `git clone https://github.com/randomstring/MMM-Traffic.git`. A new folder will appear, navigate into it.
 2. Execute `npm install` to install the node dependencies.
 
 ## Config
@@ -31,11 +31,13 @@ The entry in `config.js` can include the following options:
 |`route_name`|A nickname for the route that will appear below the route when set.<br><br>**Example:** `'Home to school'`<br>**Default value:** None|
 |`show_summary`|Show the route's summary after the nickname.<br><br>**Default value:** `true` but won't show unless `route_name` is set<br>**Effect** (in bold): 'Home to school **via Route 1/Main St**'|
 |`traffic_model`|Model for traffic estimation.<br><br>**Default value:** `'best_guess'`<br>**Other Options:**`'optimistic' 'pessimistic'`|
+|`bicycling_speed`|Google's API assumes everyone bicycles at 12mph. This sets a different average speed for calculating travel time by bike. Speed is specified in miles per hour (mph).<br><br>**Default value:** `'12'`|
+
 
 Here is an example of an entry in `config.js`
 ```
 {
-	module: 'MMM-Traffic',
+	module: 'MMM-Traffic-Multi',
 	position: 'top_left',
 	classes: 'dimmed medium', //optional, default is 'bright medium', only applies to commute info not route_name
 	config: {
