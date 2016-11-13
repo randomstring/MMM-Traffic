@@ -44,7 +44,6 @@ module.exports = NodeHelper.create({
 		self.handleError(resp, route);
 	    }
 	    else {
-		console.log(resp);
 		if (resp.routes[0].legs[0].duration_in_traffic) {
 		    route.commute = resp.routes[0].legs[0].duration_in_traffic.text;
 		    route.trafficValue = resp.routes[0].legs[0].duration_in_traffic.value;
