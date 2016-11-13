@@ -46,7 +46,7 @@ Here is an example of an entry in `config.js`
 		showGreen: false,
 		limitYellow: 5, //Greater than 5% of journey time due to traffic
 		limitRed: 20, //Greater than 20% of journey time due to traffic
-		interval: 120000, //2 minutes
+		interval: 15 * 60 * 1000, //15 minutes
 		routes: [
 			{
 				route_name: 'Home to Work',
@@ -55,6 +55,12 @@ Here is an example of an entry in `config.js`
 				destination: '1 MetLife Stadium Dr, East Rutherford, NJ 07073',
 				arrival_time: '0800', //optional, but needs to be in 24 hour time if used.
 				traffic_model: 'pessimistic'
+			},
+			{
+				route_name: 'Home to School',
+				mode: 'transit',
+				origin: '4 Pennsylvania Plaza, New York, NY 10001',
+				destination: 'Washington Square, New York, NY',
 			}
 		]
 	}
