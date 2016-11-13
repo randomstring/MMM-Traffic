@@ -14,6 +14,21 @@ module.exports = NodeHelper.create({
     console.log('MMM-Traffic-Multi helper started ...');
   },
 
+  handleError: function(resp, route) {
+      route.status = resp.status;
+      route.error_message = resp.error_message;
+      if (resp.status == 'OVER_QUERY_LIMIT') {
+	  console.log("API-Call Quote reached for today -> no more calls until 0:00 PST");
+	  route.error_message = 'API quota exceeded';
+      }
+      else if(resp.status == 'REQUEST_DENIED') {
+	  route.error_message = 'missing a valid Google API key';
+      }
+      console.log('API-Call: error ' + resp.status +' "' + resp.error_message + '"');
+      this.sendSocketNotification('ERROR_MESSAGE', route);    
+  },
+
+
   getCommute: function(route) {
       var self = this;
       
@@ -24,22 +39,23 @@ module.exports = NodeHelper.create({
       
       request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
         if (!error && response.statusCode == 200) {
-            var trafficComparison = 0;
-	    if((JSON.parse(body).status)=='OVER_QUERY_LIMIT') {
-		console.log("API-Call Quote reached for today -> no more calls until 0:00 PST");
+	    var resp = JSON.parse(body);
+	    if (resp.status != 'OK') {
+		self.handleError(resp, route);
 	    }
 	    else {
-		if (JSON.parse(body).routes[0].legs[0].duration_in_traffic) {
-		    route.commute = JSON.parse(body).routes[0].legs[0].duration_in_traffic.text;
-		    route.trafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
-		    route.noTrafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
-		    route.withTrafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
+		console.log(resp);
+		if (resp.routes[0].legs[0].duration_in_traffic) {
+		    route.commute = resp.routes[0].legs[0].duration_in_traffic.text;
+		    route.trafficValue = resp.routes[0].legs[0].duration_in_traffic.value;
+		    route.noTrafficValue = resp.routes[0].legs[0].duration.value;
+		    route.withTrafficValue = resp.routes[0].legs[0].duration_in_traffic.value;
 		    route.trafficComparison = parseInt(route.withTrafficValue)/parseInt(route.noTrafficValue);
 		} else {
-		    route.commute = JSON.parse(body).routes[0].legs[0].duration.text;
-		    route.trafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
+		    route.commute = resp.routes[0].legs[0].duration.text;
+		    route.trafficValue = resp.routes[0].legs[0].duration.value;
 		}
-		route.summary = JSON.parse(body).routes[0].summary;
+		route.summary = resp.routes[0].summary;
 		if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
 		    /* Google assumes bikes average 12 mph. Convert to new average speed */
 		    route.trafficValue = Math.floor(route.trafficValue * 12.0 / route.bicycling_speed);
@@ -76,15 +92,20 @@ module.exports = NodeHelper.create({
       var newTiming = 0;
       request({url: route.url + "&departure_time=now", method: 'GET'}, function(error, response, body) {
 		  if (!error && response.statusCode == 200) {
-		      var durationValue = JSON.parse(body).routes[0].legs[0].duration.value;
-
-		      if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
-			  /* Google assumes bikes average 12 mph. Convert to new average speed */
-			  durationValue = Math.floor(durationValue * 12.0 / route.bicycling_speed);
+		      var resp = JSON.parse(body);
+		      if (resp.status != 'OK') {
+			  self.handleError(resp, route);
 		      }
+		      else {
+			  var durationValue = resp.routes[0].legs[0].duration.value;
+			  if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
+			      /* Google assumes bikes average 12 mph. Convert to new average speed */
+			      durationValue = Math.floor(durationValue * 12.0 / route.bicycling_speed);
+			  }
 
-		      newTiming = self.timeSub(route.arrival_time, durationValue, 0);
-		      self.getTimingFinal(route, newTiming, route.arrival_time);
+			  newTiming = self.timeSub(route.arrival_time, durationValue, 0);
+			  self.getTimingFinal(route, newTiming, route.arrival_time);
+		      }
 		  }
 	      });
   },
@@ -93,20 +114,26 @@ module.exports = NodeHelper.create({
     var self = this;
     request({url: route.url + "&departure_time=" + newTiming, method: 'GET'}, function(error, response, body) {
       if (!error && response.statusCode == 200) {
-        if (JSON.parse(body).routes[0].legs[0].hasOwnProperty('duration_in_traffic')) {
-          route.trafficValue = JSON.parse(body).routes[0].legs[0].duration_in_traffic.value;
-        } else {
-          route.trafficValue = JSON.parse(body).routes[0].legs[0].duration.value;
-        }
+	  var resp = JSON.parse(body);
+	  if (resp.status != 'OK') {
+		self.handleError(resp,route);
+	  }
+	  else {
+              if (resp.routes[0].legs[0].hasOwnProperty('duration_in_traffic')) {
+		  route.trafficValue = resp.routes[0].legs[0].duration_in_traffic.value;
+              } else {
+		  route.trafficValue = resp.routes[0].legs[0].duration.value;
+              }
+	  
+	      if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
+		  /* Google assumes bikes average 12 mph. Convert to new average speed */
+		  route.trafficValue = Math.floor(route.trafficValue * 12.0 / route.bicycling_speed);
+	      }
 
-	if (route.mode === 'bicycling' && (route.bicycling_speed > 1)) {
-	    /* Google assumes bikes average 12 mph. Convert to new average speed */
-	    route.trafficValue = Math.floor(route.trafficValue * 12.0 / route.bicycling_speed);
-	}
-
-        route.summary = JSON.parse(body).routes[0].summary;
-        route.leaveBy = self.timeSub(arrivalTime, route.trafficValue, 1);
-        self.sendSocketNotification('TRAFFIC_TIMING', route);
+              route.summary = resp.routes[0].summary;
+              route.leaveBy = self.timeSub(arrivalTime, route.trafficValue, 1);
+              self.sendSocketNotification('TRAFFIC_TIMING', route);
+	  }
       }
     });
 

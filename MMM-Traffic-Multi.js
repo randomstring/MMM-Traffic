@@ -110,7 +110,13 @@ Module.register('MMM-Traffic-Multi', {
             var wrapper = document.createElement("div");
             var commuteInfo = document.createElement('div'); //support for config.changeColor
 	    
-            if (!route.loaded) {
+            if (route.hasOwnProperty('error_message')) {
+		wrapper.innerHTML = route.error_message;
+		wrapper.className += ' red';
+		route.error_message = '';
+		route.status = '';
+            }
+            else if (!route.loaded) {
 		wrapper.innerHTML = this.config.loadingText;
             }
 	    else {
